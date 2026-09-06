@@ -25,8 +25,8 @@ Method - KernelSHAP Options:
 - kernelUseRaw: Flag to specify whether to use raw data (1=Yes, 0=No)
 
 
-Tested in SAS Viya 2026.05
-Version: 1.0.3 (28JUL2026)
+Tested in SAS Viya 2026.08
+Version: 1.0.4 (06SEP2026)
 ************************************************************************/;
 
 
@@ -42,6 +42,7 @@ MACRO DEFINITION
    Otherwise, the else block containing the proc shapley will execute
 *------------------------------------------------------------------------------------------ */
 %macro _shapley;
+    %local _eps_Query_Data;
 
     /* Ensure required parameters are provided before executing */
     %if %sysevalf(%superq(refData)=, boolean) or 
@@ -50,24 +51,33 @@ MACRO DEFINITION
             %sysevalf(%superq(intervalVars)=, boolean) and
             %sysevalf(%superq(nominalVars)=, boolean)
         ) %then %do;
-        %put ERROR: Missing required parameters. Please check your SAS Studio Flow inputs and Target Variable selection.;
+        %put ERROR: Missing required parameters. Please check the input variable and target variable selection.;
     %end;
     %else %do;
         
         /* If astoreTable has no value in the UI then make sure it's set equal to nothing so that it doesn't throw a warning */
         %if not %symexist(astoreTable) %then %let astoreTable=;
         
+        /* Move the data to the same engine as the reference data */
+        %if %upcase(&refData_engine.) = CAS %then %do;
+            %let _eps_Query_Data = &refData_lib.._query;
+        %end;
+        %else %do;
+            %let _eps_Query_Data = work._query;
+        %end;
+
+        %put &=_eps_Query_Data;
+
         /* Create the data for Proc Shapley that only needs one row of the reference data */
-        data CASUSER._QUERY;
-            set &refData(obs=1);
+        data &_eps_Query_Data.;
+            set &refData.(obs=1);
         run; 
         
-        /* Execute the Trustworthy AI PROC SHAPLEY step */
-        proc shapley data=CASUSER._QUERY referencedata=&refData;
+        proc shapley data=&_eps_Query_Data. referenceData=&refData. impute=&impute.;
             
             /* Reference an Analytic Store (ASTORE) model if provided */
             %if %sysevalf(%superq(astoreTable)=, boolean) = 0 %then %do;
-                astoremodel rstore=&astoreTable.;
+                astoreModel rstore=&astoreTable.;
             %end;
 
             /* Define Interval input variables if specified */
@@ -90,14 +100,12 @@ MACRO DEFINITION
 
             /* Construct dynamic METHOD statement based on selection */
             %if %upcase(&methodType.) = HYPERSHAP %then %do;
-                method hypershap (
-                    /*%if %sysevalf(%superq(hyperSeed)=, boolean) = 0 %then seed=&hyperSeed. ;*/
-                    /*%if &hyperUseRaw. = 1 %then useRawData ;*/
+                method hyperSHAP (
                     %if %sysevalf(%superq(hyperDepth)=, boolean) = 0 %then depth=&hyperDepth. ;
                 );
             %end;
             %else %if %upcase(&methodType.) = KERNELSHAP %then %do;
-                method kernelshap (
+                method kernelSHAP (
                     %if %sysevalf(%superq(kernelBinWidth)=, boolean) = 0 %then binwidth=&kernelBinWidth. ;
                     %if &kernelIncMissing. = 1 %then includeMissing ;
                     %if %sysevalf(%superq(kernelSampleSize)=, boolean) = 0 %then sampleSize=&kernelSampleSize. ;
@@ -106,6 +114,11 @@ MACRO DEFINITION
                 );
             %end;
         run;
+
+        * Clean up;
+        proc sql noPrint;
+            drop table &_eps_Query_Data.;
+        quit;
     %end;
 %mend _shapley;
 
@@ -113,11 +126,10 @@ MACRO DEFINITION
 EXECUTION CODE
 ************************************************************************/;
 
-TITLE1 "Shapley";
+title "Shapley";
 
-%_shapley;
+%_shapley
 
 title;
-footnote;
 
-%sysmacdelete _shapley; 
+%sysmacdelete _shapley;

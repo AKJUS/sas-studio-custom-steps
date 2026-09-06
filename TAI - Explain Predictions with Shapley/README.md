@@ -7,7 +7,7 @@ The step supports two calculation algorithms:
 - **HyperSHAP**: A fast approximation method optimized for tree-based models.
 - **KernelSHAP**: A model-agnostic, kernel-based approximation method for general models.
 
-More information about PROC SHAPLEY: [PROC SHAPLEY documentation](https://go.documentation.sas.com/doc/cn/pgmsascdc/default/casml/casml_shapley_toc.htm)
+More information about PROC SHAPLEY: [PROC SHAPLEY documentation](https://go.documentation.sas.com/doc/en/pgmsascdc/default/casml/casml_shapley_toc.htm)
 
 ---
 ## Understanding Shapley Values
@@ -17,7 +17,7 @@ Because this approach considers interactions between factors, it can provide a m
 
 ---
 ## Requirements
-- **SAS Viya** environment (tested on stable release `2026.05`).
+- **SAS Viya** environment (tested on stable release `2026.08`).
 - **SAS Trustworthy AI** / **SAS Visual Data Mining and Machine Learning (VDMML)** license to access `PROC SHAPLEY`.
 
 ---
@@ -25,6 +25,16 @@ Because this approach considers interactions between factors, it can provide a m
 Configure the input reference datasets, select your prediction column, select inputs, and define model hyperparameters in the **Design** and **Configuration** tabs. Run the step to generate the explainability results.
 
 ---
+## User Interface
+
+-   ### Design tab ###
+
+    ![Design page](./img/Design-Page.png)
+
+-   ### Configuration tab
+
+    ![Configuration page](./img/Configuration-Page.png)
+
 ## Parameters
 
 ### Design Tab (Source Parameters)
@@ -103,6 +113,9 @@ This step is part of the `sas-studio-custom-steps` collection. Follow the reposi
 ---
 ## Change Log
 
+- Version 1.0.4 (06SEP2026)
+  - Implement reviewer feedback
+
 - Version 1.0.3 (28JUL2026)
   - Creation of `Understanding Shapley Values` section in README to explain what Shapley is
 
@@ -119,12 +132,6 @@ This step is part of the `sas-studio-custom-steps` collection. Follow the reposi
   - Includes optional weight variable support.
   - Reads the first observation from the selected reference data table into `CASUSER._QUERY` before running `PROC SHAPLEY`.
 
-- Version 1.0.0 (6JUL2026)
+- Version 1.0.0 (06JUL2026)
   - Initial version
   - Proposed Design on what the step will contain and how it will be set up
-
-*Generative AI assistance: GPT-4.1 for standard template boilerplate alignment.*
-
----
-## Contact
-- [Dawn Pancholi](mailto:Shubham.pancholi@sas.com)
